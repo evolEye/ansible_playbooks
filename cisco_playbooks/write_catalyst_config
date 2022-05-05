@@ -1,0 +1,10 @@
+---
+ - name: Write Switches
+   hosts: main-campus
+   gather_facts: no
+   connection: local 
+
+   tasks:
+     - name: Write switches
+       cisco.ios.ios_config:
+         save_when: always
