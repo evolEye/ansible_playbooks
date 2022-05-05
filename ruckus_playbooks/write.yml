@@ -1,0 +1,12 @@
+---
+
+ - name: Update sshAllow
+   hosts: all
+   gather_facts: no
+   connection: network_cli 
+
+
+   tasks:
+           - name: Write to mem
+             community.network.icx_config:
+                 save_when: always
