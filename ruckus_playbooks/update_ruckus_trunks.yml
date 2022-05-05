@@ -27,7 +27,7 @@
                
            - name: Parse Trunk Ports
              command_parser:
-               file: "templates/trunk_ports.yml"
+               file: "ruckus_templates/trunk_ports.yml"
                content: "{{ output.stdout[0] }}"
                
            - name: Ports
