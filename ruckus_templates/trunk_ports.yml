@@ -1,0 +1,20 @@
+---
+- name: PATTERN MATCH
+  pattern_match:
+    regex: '^(\w+\.\w+\.\w+)\s+(\d\/\d\/\d)'
+    match_all: yes
+  register: section
+  export: yes
+
+- name: Generate JSON DATA STRUCTURE
+  json_template:
+    template:
+      - key: "{{ item.matches.0 }}"
+        object:
+          - key: data
+            object:
+              - key: port_number
+                value: "{{ item.matches.1 }}"
+  loop: "{{ section }}"
+  export: yes
+  register: trunk_port_facts
