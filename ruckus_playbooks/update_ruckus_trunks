@@ -1,0 +1,48 @@
+---
+- name: Create Vlan and add to trunks
+  hosts: all
+  gather_facts: no
+  connection: network_cli
+  roles:
+          - ansible-network.network-engine
+  vars:
+          - ansible_network_os: icx
+          
+  tasks:
+         
+           - name: Add vlan
+             community.network.icx_config:
+               lines: 
+               - vlan {{ vlan }} name {{ vlan_description }}
+
+           - name: Show Run
+             community.network.icx_command:
+               commands:
+               - show mac-address | i {{ target_meraki_by_mac }}
+             register: output
+             
+           - name: print Trunk Return
+             debug:
+               msg: "{{ output }}"
+               
+           - name: Parse Trunk Ports
+             command_parser:
+               file: "templates/trunk_ports.yml"
+               content: "{{ output.stdout[0] }}"
+               
+           - name: Ports
+             set_fact:
+               port: "{{ ansible_facts | json_query(find_ports) | unique }}"
+             vars:
+               find_ports: 'trunk_port_facts[*].*.data.port_number'
+               
+           - name: print ports
+             debug:
+               msg: "{{ port }}"
+               
+           - name: add vlan to trunk
+             community.network.icx_config:
+               lines:
+               - tagged ethernet {{ item }}
+               parents: vlan {{ vlan }}
+             with_items: "{{ port }}"
