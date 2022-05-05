@@ -1,0 +1,41 @@
+---
+- name: Add Vlan assign to trunk ports
+  hosts: all
+  gather_facts: no
+  connection: network_cli
+  roles:
+   - ansible-network.network-engine
+
+  tasks:
+
+          - name: Create Vlan 
+            cisco.ios.ios_config:
+                    lines:
+                    - vlan {{ vlan }}
+                    - name {{ vlan_description }}
+                    
+          - name: Find Trunk Ports
+            ios_command:
+                    commands:
+                      - show interface trunk | i {{ meraki_management_vlan }}
+            register: trunk_return
+            
+#          - name: print trunk ports
+#            debug:
+#              msg: "{{ trunk_return }}"
+              
+          - name: Parse Trunk Ports
+            command_parser:
+              file: "templates/trunk_ports.yml"
+              content: "{{ trunk_return.stdout[0] }}"
+              
+          - name: Ports
+            set_fact:
+              port: "{{ ansible_facts.trunk_port_facts | json_query('[*].*.data.port_number') | unique }}"
+  
+          - name: add vlan to trunk
+            cisco.ios.ios_config:
+              lines:
+              - switchport trunk allowed vlan add {{ vlan }}
+              parents: interface {{ item }}
+            with_items: "{{ port }}"
